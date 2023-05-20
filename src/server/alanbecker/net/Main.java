@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,18 +12,18 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Main extends JavaPlugin implements Listener {
 
     private double rewardPercentage;
     private List<String> rewards;
+    private Map<String, String> rewardLoreMap;
 
     @Override
     public void onEnable() {
@@ -44,12 +45,22 @@ public class Main extends JavaPlugin implements Listener {
                 "tokenadmin add %player% 10",
                 "give %player% diamond 1"
         ));
+        config.addDefault("RewardLore.give %player% diamond 1", "Receive a diamond!");
 
         config.options().copyDefaults(true);
         saveConfig();
 
-        rewardPercentage = config.getDouble("RewardPercentage") / 100.0; 
+        rewardPercentage = config.getDouble("RewardPercentage") / 100.0;
         rewards = config.getStringList("Rewards");
+        rewardLoreMap = new HashMap<>();
+
+        ConfigurationSection rewardLoreSection = config.getConfigurationSection("RewardLore");
+        if (rewardLoreSection != null) {
+            for (String key : rewardLoreSection.getKeys(false)) {
+                String value = rewardLoreSection.getString(key);
+                rewardLoreMap.put(key, value);
+            }
+        }
     }
 
 
@@ -90,21 +101,15 @@ public class Main extends JavaPlugin implements Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta.hasDisplayName() && meta.getDisplayName().equals("MineCrate")) {
                 event.setCancelled(true);
-                event.setCurrentItem(null); 
+                event.setCurrentItem(null);
 
                 Player player = (Player) event.getWhoClicked();
 
-                Random random = new Random();
-                double randomValue = random.nextDouble();
-                if (randomValue < rewardPercentage) {
-                    giveRandomReward(player);
-                } else {
-                    player.sendMessage("The MineCrate was empty!");
-                }
+                openRewardSelectionGUI(player);
             }
         }
     }
-    
+
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
@@ -113,35 +118,74 @@ public class Main extends JavaPlugin implements Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta.hasDisplayName() && meta.getDisplayName().equals("MineCrate")) {
                 event.setCancelled(true);
-                
+
                 if (item.getAmount() > 1) {
                     item.setAmount(item.getAmount() - 1);
                 } else {
                     player.getInventory().remove(item);
                 }
-                
-                Random random = new Random();
-                double randomValue = random.nextDouble();
-                if (randomValue < rewardPercentage) {
-                    giveRandomReward(player);
-                } else {
-                    player.sendMessage("The MineCrate was empty!");
+
+                openRewardSelectionGUI(player);
+            }
+        }
+    }
+
+    private void openRewardSelectionGUI(Player player) {
+        Inventory gui = Bukkit.createInventory(null, 9, "Select a Reward");
+
+        // Add rewards to the GUI as selectable items
+        Random random = new Random();
+        for (int i = 0; i < 3; i++) {
+            String randomRewardCommand = rewards.get(random.nextInt(rewards.size()));
+            String rewardCommand = randomRewardCommand.replace("%player%", player.getName());
+
+            ItemStack rewardItem = new ItemStack(Material.DIAMOND);
+            ItemMeta rewardMeta = rewardItem.getItemMeta();
+            rewardMeta.setDisplayName("Reward #" + (i + 1));
+            String rewardLore = rewardLoreMap.getOrDefault(randomRewardCommand, "");
+            rewardMeta.setLore(Arrays.asList(rewardLore));
+            rewardItem.setItemMeta(rewardMeta);
+
+            gui.setItem(i, rewardItem);
+        }
+
+        player.openInventory(gui);
+    }
+
+    @EventHandler
+    public void onRewardSelection(InventoryClickEvent event) {
+        if (event.getView().getTitle().equals("Select a Reward")) {
+            event.setCancelled(true);
+
+            Player player = (Player) event.getWhoClicked();
+            ItemStack selectedReward = event.getCurrentItem();
+
+            if (selectedReward != null && selectedReward.getType() == Material.DIAMOND && selectedReward.hasItemMeta()) {
+                ItemMeta meta = selectedReward.getItemMeta();
+                List<String> lore = meta.getLore();
+
+                if (lore != null && !lore.isEmpty()) {
+                    String rewardLore = lore.get(0);
+
+                    for (Map.Entry<String, String> entry : rewardLoreMap.entrySet()) {
+                        if (entry.getValue().equals(rewardLore)) {
+                            String rewardCommand = entry.getKey().replace("%player%", player.getName());
+
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), rewardCommand);
+                            player.sendMessage("You received a reward!");
+
+                            player.closeInventory();
+                            return;
+                        }
+                    }
                 }
             }
         }
     }
 
-
-
-    private void giveRandomReward(Player player) {
-        String randomRewardCommand = rewards.get(new Random().nextInt(rewards.size()));
-        String rewardCommand = randomRewardCommand.replace("%player%", player.getName());
-
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), rewardCommand);
-    }
-
     private boolean isToolForMining(Material material) {
-        Material[] miningTools = {Material.DIAMOND_PICKAXE, Material.IRON_PICKAXE, Material.STONE_PICKAXE, Material.WOODEN_PICKAXE};
+        Material[] miningTools = { Material.DIAMOND_PICKAXE, Material.IRON_PICKAXE, Material.STONE_PICKAXE,
+                Material.WOODEN_PICKAXE };
 
         for (Material tool : miningTools) {
             if (tool == material) {
