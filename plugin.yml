@@ -1,0 +1,9 @@
+main: server.alanbecker.net.Main
+name: ABMCMineCrates
+version: 1
+api-version: 1.19
+
+commands:
+  minechessreload:
+    description: Reloads the MineChess configuration.
+    permission: minechess.reload

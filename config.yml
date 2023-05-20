@@ -1,0 +1,7 @@
+# Config.yml
+
+RewardPercentage: 50.0
+Rewards:
+  - "eco give %player% 10"
+  - "tokenadmin add %player% 10"
+  - "give %player% diamond 1"
