@@ -85,7 +85,7 @@ public class Main extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
 
         Material toolType = player.getInventory().getItemInMainHand().getType();
-        if (isToolForMining(toolType)) {
+        if (isToolForMining(toolType) && Math.random() < rewardPercentage) {
             ItemStack mineCrate = createMineCrate();
 
             player.getInventory().addItem(mineCrate);
@@ -93,6 +93,7 @@ public class Main extends JavaPlugin implements Listener {
             player.sendMessage("You received a MineCrate!");
         }
     }
+
 
     @EventHandler
     public void onInventoryClickEvent(InventoryClickEvent event) {
