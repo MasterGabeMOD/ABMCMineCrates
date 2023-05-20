@@ -55,14 +55,14 @@ public class Main extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (command.getName().equalsIgnoreCase("minechessreload")) {
-            if (sender.hasPermission("minechess.reload")) {
+        if (command.getName().equalsIgnoreCase("minecratereload")) {
+            if (sender.hasPermission("minecrate.reload")) {
                 reloadConfig();
                 loadConfig();
-                sender.sendMessage("MineChess configuration reloaded.");
+                sender.sendMessage("MineCrate configuration reloaded.");
                 return true;
             } else {
-                sender.sendMessage("You don't have permission to reload the MineChess configuration.");
+                sender.sendMessage("You don't have permission to reload the MineCrate configuration.");
                 return true;
             }
         }
@@ -75,11 +75,11 @@ public class Main extends JavaPlugin implements Listener {
 
         Material toolType = player.getInventory().getItemInMainHand().getType();
         if (isToolForMining(toolType)) {
-            ItemStack mineChess = createMineChess();
+            ItemStack mineCrate = createMineCrate();
 
-            player.getInventory().addItem(mineChess);
+            player.getInventory().addItem(mineCrate);
 
-            player.sendMessage("You received a MineChess!");
+            player.sendMessage("You received a MineCrate!");
         }
     }
 
@@ -88,7 +88,7 @@ public class Main extends JavaPlugin implements Listener {
         ItemStack item = event.getCurrentItem();
         if (item != null && item.getType() == Material.CHEST && item.hasItemMeta()) {
             ItemMeta meta = item.getItemMeta();
-            if (meta.hasDisplayName() && meta.getDisplayName().equals("MineChess")) {
+            if (meta.hasDisplayName() && meta.getDisplayName().equals("MineCrate")) {
                 event.setCancelled(true);
                 event.setCurrentItem(null); 
 
@@ -99,7 +99,7 @@ public class Main extends JavaPlugin implements Listener {
                 if (randomValue < rewardPercentage) {
                     giveRandomReward(player);
                 } else {
-                    player.sendMessage("The MineChess was empty!");
+                    player.sendMessage("The MineCrate was empty!");
                 }
             }
         }
@@ -111,7 +111,7 @@ public class Main extends JavaPlugin implements Listener {
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item != null && item.getType() == Material.CHEST && item.hasItemMeta()) {
             ItemMeta meta = item.getItemMeta();
-            if (meta.hasDisplayName() && meta.getDisplayName().equals("MineChess")) {
+            if (meta.hasDisplayName() && meta.getDisplayName().equals("MineCrate")) {
                 event.setCancelled(true);
                 
                 if (item.getAmount() > 1) {
@@ -125,7 +125,7 @@ public class Main extends JavaPlugin implements Listener {
                 if (randomValue < rewardPercentage) {
                     giveRandomReward(player);
                 } else {
-                    player.sendMessage("The MineChess was empty!");
+                    player.sendMessage("The MineCrate was empty!");
                 }
             }
         }
@@ -152,13 +152,13 @@ public class Main extends JavaPlugin implements Listener {
         return false;
     }
 
-    private ItemStack createMineChess() {
-        ItemStack mineChess = new ItemStack(Material.CHEST);
+    private ItemStack createMineCrate() {
+        ItemStack mineCrate = new ItemStack(Material.CHEST);
 
-        ItemMeta meta = mineChess.getItemMeta();
-        meta.setDisplayName("MineChess");
-        mineChess.setItemMeta(meta);
+        ItemMeta meta = mineCrate.getItemMeta();
+        meta.setDisplayName("MineCrate");
+        mineCrate.setItemMeta(meta);
 
-        return mineChess;
+        return mineCrate;
     }
 }
